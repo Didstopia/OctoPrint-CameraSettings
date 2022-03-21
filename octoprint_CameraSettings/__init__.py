@@ -158,10 +158,13 @@ class CameraSettingsPlugin(octoprint.plugin.SettingsPlugin,
         try:
             video_devices = {}
             video_ctrls = {}
-            with os.scandir('/sys/class/video4linux') as it:
+						video_path = '/sys/class/video4linux'
+						if "V4L2_CTL_ALIAS" in os.environ:
+                video_path = '/tmp/sys/class/video4linux'
+            with os.scandir(video_path) as it:
                 for dirent in it:
                     if dirent.is_dir():
-                        with open(os.path.join('/sys/class/video4linux',dirent.name,'name'),'r') as dev_name:
+                        with open(os.path.join(video_path,dirent.name,'name'),'r') as dev_name:
                             cam_name = dev_name.read().strip()
                             if not self.exclude_camera(cam_name):
                                 video_devices[dirent.name] = cam_name
