@@ -158,8 +158,8 @@ class CameraSettingsPlugin(octoprint.plugin.SettingsPlugin,
         try:
             video_devices = {}
             video_ctrls = {}
-						video_path = '/sys/class/video4linux'
-						if "V4L2_CTL_ALIAS" in os.environ:
+            video_path = '/sys/class/video4linux'
+            if "V4L2_CTL_ALIAS" in os.environ:
                 video_path = '/tmp/sys/class/video4linux'
             with os.scandir(video_path) as it:
                 for dirent in it:
