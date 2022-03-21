@@ -155,12 +155,12 @@ class CameraSettingsPlugin(octoprint.plugin.SettingsPlugin,
         self._logger.debug("Building camera list")
         # pylint: disable=no-member
         event = octoprint.events.Events.PLUGIN_CAMERASETTINGS_CAMERAS_LIST
+        video_path = '/tmp/sys/class/video4linux'
         try:
             video_devices = {}
             video_ctrls = {}
-            video_path = '/sys/class/video4linux'
-            if "V4L2_CTL_ALIAS" in os.environ:
-                video_path = '/tmp/sys/class/video4linux'
+            #if "V4L2_CTL_ALIAS" in os.environ:
+            #    video_path = '/tmp/sys/class/video4linux'
             with os.scandir(video_path) as it:
                 for dirent in it:
                     if dirent.is_dir():
@@ -191,8 +191,8 @@ class CameraSettingsPlugin(octoprint.plugin.SettingsPlugin,
             self._logger.debug("Cameras found: {0}".format([{'device': d, 'camera': video_devices[d]} for d in video_devices]))
             self._event_bus.fire(event, payload={'cameras': [{'device': d, 'camera': video_devices[d]} for d in video_devices]})
         except FileNotFoundError:
-            self._logger.error("/sys/class/video4linux does not exist. Can't get camera devices. Are you sure this is linux?")
-            self._event_bus.fire(event, payload={'error': "/sys/class/video4linux does not exist. Can't get camera devices."})
+            self._logger.error(video_path+" does not exist. Can't get camera devices. Are you sure this is linux?")
+            self._event_bus.fire(event, payload={'error': video_path+" does not exist. Can't get camera devices."})
 
     def do_camera_control_list_event(self,device):
         self._logger.debug("Sending camera control list event")
