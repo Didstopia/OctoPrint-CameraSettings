@@ -41,25 +41,25 @@
 </div>
 {% endmacro %}
 
-<h3>Camera Settings</h3>
+<h3>External Camera Settings</h3>
 <div class="row-fluid">
     <div class="span8">
-        <div class="camPreviewContainerOuter" data-bind="visible: settings.settings.plugins.camerasettings.show_preview">
+        <div class="camPreviewContainerOuter" data-bind="visible: settings.settings.plugins.externalcamerasettings.show_preview">
             <div class="camPreviewContainer">
-                <img data-bind="hidden: webcamHLS, attr: { src: cameraSrc }, style: { transform: `rotate(${cameraRot90() ? '-90deg': '0deg'}) scaleX(${cameraFlipH() ? -1: 1}) scaleY(${cameraFlipV() ? -1: 1})`}" class="camPreview">    
-                <video id="camerasettings_preview_hls" autoplay="" muted="" controls="" data-bind="visible: webcamHLS, attr: { src: cameraSrc }, style: { transform: `rotate(${cameraRot90() ? '-90deg': '0deg'}) scaleX(${cameraFlipH() ? -1: 1}) scaleY(${cameraFlipV() ? -1: 1})`}" class="camPreview"></video>
+                <img data-bind="hidden: webcamHLS, attr: { src: cameraSrc }, style: { transform: `rotate(${cameraRot90() ? '-90deg': '0deg'}) scaleX(${cameraFlipH() ? -1: 1}) scaleY(${cameraFlipV() ? -1: 1})`}" class="camPreview">
+                <video id="externalcamerasettings_preview_hls" autoplay="" muted="" controls="" data-bind="visible: webcamHLS, attr: { src: cameraSrc }, style: { transform: `rotate(${cameraRot90() ? '-90deg': '0deg'}) scaleX(${cameraFlipH() ? -1: 1}) scaleY(${cameraFlipV() ? -1: 1})`}" class="camPreview"></video>
             </div>
-            
+
         </div>
     </div>
     <div class="span4">
         <div class="control-group">
             <label class="checkbox pull-right">
-                <input type="checkbox" data-bind="checked: settings.settings.plugins.camerasettings.show_preview">Show Preview
+                <input type="checkbox" data-bind="checked: settings.settings.plugins.externalcamerasettings.show_preview">Show Preview
             </label>
         </div>
         <div class="control-group">
-            <select class="pull-right" id="camerasettings-device" data-bind="value: selectedDevice, options: cameras, optionsText: (camera) => camera.camera, optionsValue: (camera) => camera.device" ></select>
+            <select class="pull-right" id="externalcamerasettings-device" data-bind="value: selectedDevice, options: cameras, optionsText: (camera) => camera.camera, optionsValue: (camera) => camera.device" ></select>
         </div>
         <div class="control-group">
             <button class="btn" data-bind="click: restoreDefaults">
@@ -70,7 +70,7 @@
     </div>
 </div>
 <div class="alert alert-error" data-bind="visible: showUnkControlsWarning">
-    <strong>Warning:</strong> your camera has controls that have not been implemented yet. Please <a target="_blank" href="https://github.com/The-EG/OctoPrint-CameraSettings/issues/new?assignees=&labels=enhancement&template=missing-camera-controls.md&title=%5BFR%5D+Implement+Controls+for+%5BCamera+Name%5D">open an issue</a> and include the following information:
+    <strong>Warning:</strong> your camera has controls that have not been implemented yet. Please <a target="_blank" href="https://github.com/Didstopia/OctoPrint-ExternalCameraSettings/issues/new?assignees=&labels=enhancement&template=missing-camera-controls.md&title=%5BFR%5D+Implement+Controls+for+%5BCamera+Name%5D">open an issue</a> and include the following information:
     <br><br>
     Camera Control Information: <button class="btn btn-primary" data-bind="click: copyUnkToClipboard"><i class="fas fa-copy"></i> Copy to Clipboard</button>
 </div>
@@ -197,7 +197,7 @@
         &nbsp;
     </div>
     <div class="span5">
-        <select size="3" data-bind="options: settings.settings.plugins.camerasettings.presets, optionsText: (preset) => preset.name, optionsValue: (preset) => preset.name, value: presetListName "></select>
+        <select size="3" data-bind="options: settings.settings.plugins.externalcamerasettings.presets, optionsText: (preset) => preset.name, optionsValue: (preset) => preset.name, value: presetListName "></select>
     </div>
     <div class="span3">
         <div><button style="width: 50%;" class="btn" data-bind="enable: presetListName() !== undefined, click: loadPreset"><i class="fas fa-upload"></i></button></div>
@@ -208,36 +208,36 @@
 <div class="row-fluid">
     <div class="span4 text-right">Load Preset on OctoPrint Startup</div>
     <div class="span4">
-        <input type="checkbox" class="checkbox" data-bind="checked: settings.settings.plugins.camerasettings.load_preset_on_startup"></input>
+        <input type="checkbox" class="checkbox" data-bind="checked: settings.settings.plugins.externalcamerasettings.load_preset_on_startup"></input>
     </div>
 </div>
 <div class="row-fluid">
     <div class="span4 text-right">Startup Preset</div>
     <div class="span4">
         <select data-bind="
-            enable: settings.settings.plugins.camerasettings.load_preset_on_startup,
-            options: settings.settings.plugins.camerasettings.presets,
+            enable: settings.settings.plugins.externalcamerasettings.load_preset_on_startup,
+            options: settings.settings.plugins.externalcamerasettings.presets,
             optionsText: (preset) => preset.name,
             optionsValue: (preset) => preset.name,
-            value: settings.settings.plugins.camerasettings.startup_preset_name "></select>
+            value: settings.settings.plugins.externalcamerasettings.startup_preset_name "></select>
     </div>
 </div>
 <div class="row-fluid">
     <div class="span4 text-right">Startup Preset Apply Count</div>
     <div class="span4">
-        <input type="number" data-bind="value: settings.settings.plugins.camerasettings.startup_preset_apply_count">
+        <input type="number" data-bind="value: settings.settings.plugins.externalcamerasettings.startup_preset_apply_count">
     </div>
 </div>
 <hr>
 <div class="row-fluid">
     <div class="span4 text-right">OctoPrint-MultiCam Integration</div>
     <div class="span4">
-        <input type="checkbox" class="checkbox" data-bind="checked: settings.settings.plugins.camerasettings.multicam_support, enable: settings.settings.plugins.multicam !== undefined">
+        <input type="checkbox" class="checkbox" data-bind="checked: settings.settings.plugins.externalcamerasettings.multicam_support, enable: settings.settings.plugins.multicam !== undefined">
     </div>
 </div>
 
 
-<div data-bind="foreach: {data: settings.settings.plugins.camerasettings.multicam_mapping, as: 'mapping', noChildContext: true}, visible: settings.settings.plugins.multicam !== undefined">
+<div data-bind="foreach: {data: settings.settings.plugins.externalcamerasettings.multicam_mapping, as: 'mapping', noChildContext: true}, visible: settings.settings.plugins.multicam !== undefined">
 
 <div class="row-fluid">
     <div class="span4 text-right" data-bind="text: mapping.camera"></div>

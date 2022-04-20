@@ -1,11 +1,11 @@
 
-#settings_plugin_camerasettings
+#settings_plugin_externalcamerasettings
 {
 	position: relative;
 	margin-right: 10px;
 }
 
-#settings_plugin_camerasettings .camPreviewContainer
+#settings_plugin_externalcamerasettings .camPreviewContainer
 {
 	background-color: #000;
 	resize: both;
@@ -16,19 +16,19 @@
 	max-height: 500px;
 }
 
-#settings_plugin_camerasettings .camPreview
+#settings_plugin_externalcamerasettings .camPreview
 {
 	width: 100%;
 	height: 100%;
 	object-fit: contain;
 }
 
-#settings_plugin_camerasettings .alert
+#settings_plugin_externalcamerasettings .alert
 {
 	margin-top: 10px;
 }
 
-#settings_plugin_camerasettings .camMainSettings
+#settings_plugin_externalcamerasettings .camMainSettings
 {
 	min-height: 200px;
 	overflow: auto;
@@ -36,7 +36,7 @@
 	height: 25vh;
 }
 
-#settings_plugin_camerasettings .camMainSettings div.control-group
+#settings_plugin_externalcamerasettings .camMainSettings div.control-group
 {
 	height: auto !important;
 	margin-bottom: 10px;

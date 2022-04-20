@@ -1,23 +1,47 @@
-# OctoPrint-CameraSettings
-[![GitHub release](https://img.shields.io/github/v/release/The-EG/OctoPrint-CameraSettings)](https://github.com/The-EG/OctoPrint-CameraSettings/releases/latest) [![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/The-EG/OctoPrint-CameraSettings?include_prereleases&label=pre-release)](https://github.com/The-EG/OctoPrint-CameraSettings/releases)
+# OctoPrint-ExternalCameraSettings
 
-![camerasettings](camerasettings.png)
+[![GitHub release](https://img.shields.io/github/v/release/Didstopia/OctoPrint-ExternalCameraSettings)](https://github.com/Didstopia/OctoPrint-ExternalCameraSettings/releases/latest) [![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/Didstopia/OctoPrint-ExternalCameraSettings?include_prereleases&label=pre-release)](https://github.com/Didstopia/OctoPrint-ExternalCameraSettings/releases)
 
-Camera Settings allows a user to interactively change camera settings by running `v4l2-ctl` on the backend. This method should work for any Linux environment, including OctoPi, as long as the camera is attached to the same device running OctoPrint.
+---
 
-*Note: not compatible with The Spaghetti Detective premium.*
+**NOTICE:** _This is a fork of [The-EG](https://github.com/The-EG)'s [OctoPrint-CameraSettings](https://github.com/The-EG/OctoPrint-CameraSettings) plugin, designed exlusively for controlling cameras running on remote systems._
 
-This plugin should work with little or no configuration changes, although RaspiCam users may need to change to 'usb' mode. See [setup](docs/setup.md).
+---
 
-[Frequently Asked Questions](docs/faq.md)
+## Description
 
-## Setup
+<!-- TODO: Add a new screenshot -->
+<!--![camerasettings](camerasettings.png)-->
 
-Install via the bundled [Plugin Manager](https://docs.octoprint.org/en/master/bundledplugins/pluginmanager.html)
-or manually using this URL:
+<!-- FIXME: Rewrite the description, be as brief as possible! -->
 
-    https://github.com/The-EG/OctoPrint-CameraSettings/archive/main.zip
+External Camera Settings allows a user to interactively change camera settings by running `v4l2-ctl` on the backend. This method should work for any Linux environment, including OctoPi, as long as the camera is attached to the same device running OctoPrint.
 
-## Questions and Contact
+## Installation
 
-If you find a bug or want to request a feature, please open an issue here as approprite. For more general questions or feedback, I can be found on the [OctoPrint Community Forum](https://community.octoprint.org/) (TTalkington) and on the official [OctoPrint Discord Server](https://discord.octoprint.org/) (The-EG).
+**WARNING:** _This plugin is still in development, and may not work as expected. This includes documentation, such as for installation and usage, and may not be available on OctoPrint's plugin manager yet._
+
+<!-- TODO: Outline any necessary requirements for OctoPrint and remote host-->
+<!-- TODO: Outline the usage with remote hosts, eg. via SSH -->
+
+<!-- TODO: Figure out how to eventually publish plugins to the plugin manager -->
+
+~~Install via the bundled [Plugin Manager](https://docs.octoprint.org/en/master/bundledplugins/pluginmanager.html) or~~ manually using the following URL:
+
+```html
+https://github.com/Didstopia/OctoPrint-ExternalCameraSettings/archive/main.zip
+```
+
+Note that the URL above is for the latest development version and may be more unstable and/or buggy than the tagged release versions, ~~so installation through the [Plugin Manager](https://docs.octoprint.org/en/master/bundledplugins/pluginmanager.html) is generally preferred~~.
+
+## Usage
+
+<!-- TODO: Write basic usage instructions here -->
+
+_Not yet implemented._
+
+## License
+
+See [LICENSE](LICENSE).
+
+Original plugin author: [The-EG](https://github.com/The-EG)

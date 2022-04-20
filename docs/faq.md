@@ -1,5 +1,7 @@
 # Frequently Asked Questions
 
+**WARNING:** _This document is **not** up-to-date!_
+
 ## I have a RaspiCam v1, v2, HQ, etc and the controls do not work! Why?
 
 See [Raspberry Pi Cameras ('RaspiCam')](setup.md#raspberry-pi-cameras-raspicam) in setup

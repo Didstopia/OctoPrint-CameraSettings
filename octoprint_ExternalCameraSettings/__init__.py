@@ -12,7 +12,7 @@ import threading
 CTRL_PAT = re.compile(r' +(?P<name>\w+) ?(?P<id>0x\w+)? \((?P<type>\w+)\) *: (min=(?P<min>[\-\d]+))? ?(max=(?P<max>[\-\d]+))? ?(step=(?P<step>[\-\d]+))? ?(default=(?P<default>[\-\d]+))? ?(value=(?P<value>[\-\d]+))? ?(flags=(?P<flags>\w+))?')
 MENU_PAT = re.compile(r'[\t ]+(?P<value>\d+): (?P<desc>.*)')
 
-class CameraSettingsPlugin(octoprint.plugin.SettingsPlugin,
+class ExternalCameraSettingsPlugin(octoprint.plugin.SettingsPlugin,
                            octoprint.plugin.AssetPlugin,
                            octoprint.plugin.StartupPlugin,
                            octoprint.plugin.SimpleApiPlugin,
@@ -28,14 +28,14 @@ class CameraSettingsPlugin(octoprint.plugin.SettingsPlugin,
         self._logger.debug("[{0}] Processing output of v4l2-ctl --list-ctrls-menus:".format(device))
         for line in v4l2_list_ctrls:
             m = CTRL_PAT.match(line)
-            if m is None and not last_ctrl_is_menu: 
+            if m is None and not last_ctrl_is_menu:
                 self._logger.debug("[{1}] Skipping line, no CTRL_PAT match: {0}".format(line, device))
                 continue
             if m is None and last_ctrl_is_menu:
                 m = MENU_PAT.match(line)
-                if m is None: 
+                if m is None:
                     self._logger.debug("[{1}] Skipping line, no MENU_PAT match: {0}".format(line, device))
-                    continue                    
+                    continue
                 ctrls[last_ctrl]['values'].append({'value': m.group('value'), 'desc': m.group('desc')})
                 self._logger.debug("[{1}] Found MENU item in: {0}".format(line, device))
                 continue
@@ -53,7 +53,7 @@ class CameraSettingsPlugin(octoprint.plugin.SettingsPlugin,
             if m.group('flags'): ctrl['flags'] = m.group('flags')
             ctrls[m.group('name')] = ctrl
         return ctrls
-        
+
 
     ##~~ SettingsPlugin mixin
 
@@ -76,7 +76,7 @@ class CameraSettingsPlugin(octoprint.plugin.SettingsPlugin,
     def exclude_camera(self, name):
         for filter in self._settings.get(['camera_name_filters']):
             pat = re.compile(filter)
-            if pat.match(name): 
+            if pat.match(name):
                 self._logger.info("Excluding camera {0} based on {1}".format(name,filter))
                 return True
         return False
@@ -117,7 +117,7 @@ class CameraSettingsPlugin(octoprint.plugin.SettingsPlugin,
         preset = None
         for p in presets:
             if p['name']==name: preset = p
-        
+
         if preset is None: return
         self.do_set_camera_controls(p['camera'], p['controls'], True, count)
 
@@ -150,11 +150,11 @@ class CameraSettingsPlugin(octoprint.plugin.SettingsPlugin,
 
         if send_list: self.do_camera_control_list_event(device)
 
-    
+
     def do_cameras_list_event(self):
         self._logger.debug("Building camera list")
         # pylint: disable=no-member
-        event = octoprint.events.Events.PLUGIN_CAMERASETTINGS_CAMERAS_LIST
+        event = octoprint.events.Events.PLUGIN_EXTERNALCAMERASETTINGS_CAMERAS_LIST
         video_path = '/tmp/sys/class/video4linux'
         try:
             video_devices = {}
@@ -182,7 +182,7 @@ class CameraSettingsPlugin(octoprint.plugin.SettingsPlugin,
             self._logger.debug("Original multicam_mapping {0}".format(cam_map))
             for cam in cam_names:
                 if len([x for x in cam_map if x['camera']==cam])==0: cam_map.append({'camera': cam, 'multicam': None})
-            
+
             cam_map = [x for x in cam_map if x['camera'] in cam_names]
             self._logger.debug("New multicam_mapping {0}".format(cam_map))
 
@@ -197,7 +197,7 @@ class CameraSettingsPlugin(octoprint.plugin.SettingsPlugin,
     def do_camera_control_list_event(self,device):
         self._logger.debug("Sending camera control list event")
         # pylint: disable=no-member
-        event = octoprint.events.Events.PLUGIN_CAMERASETTINGS_CAMERA_CONTROL_LIST
+        event = octoprint.events.Events.PLUGIN_EXTERNALCAMERASETTINGS_CAMERA_CONTROL_LIST
         try:
             ctrls = self.get_camera_ctrls(device)
             self._event_bus.fire(event, payload={'controls': ctrls})
@@ -215,8 +215,8 @@ class CameraSettingsPlugin(octoprint.plugin.SettingsPlugin,
         # Define your plugin's asset files to automatically include in the
         # core UI here.
         return dict(
-            js=["js/CameraSettings.js"],
-            css=["css/CameraSettings.css"]
+            js=["js/ExternalCameraSettings.js"],
+            css=["css/ExternalCameraSettings.css"]
         )
 
     def get_template_configs(self):
@@ -230,18 +230,18 @@ class CameraSettingsPlugin(octoprint.plugin.SettingsPlugin,
         # Plugin here. See https://docs.octoprint.org/en/master/bundledplugins/softwareupdate.html
         # for details.
         return dict(
-            camerasettings=dict(
-                displayName="Camera Settings",
+            externalcamerasettings=dict(
+                displayName="External Camera Settings",
                 displayVersion=self._plugin_version,
 
                 # version check: github repository
                 type="github_release",
-                user="The-EG",
-                repo="OctoPrint-CameraSettings",
+                user="Didstopia",
+                repo="OctoPrint-ExternalCameraSettings",
                 current=self._plugin_version,
 
                 # update method: pip
-                pip="https://github.com/The-EG/OctoPrint-CameraSettings/archive/{target_version}.zip",
+                pip="https://github.com/Didstopia/OctoPrint-ExternalCameraSettings/archive/{target_version}.zip",
 
                 # release channels
                 stable_branch=dict(
@@ -263,7 +263,7 @@ class CameraSettingsPlugin(octoprint.plugin.SettingsPlugin,
 # If you want your plugin to be registered within OctoPrint under a different name than what you defined in setup.py
 # ("OctoPrint-PluginSkeleton"), you may define that here. Same goes for the other metadata derived from setup.py that
 # can be overwritten via __plugin_xyz__ control properties. See the documentation for that.
-__plugin_name__ = "Camera Settings"
+__plugin_name__ = "External Camera Settings"
 
 # Starting with OctoPrint 1.4.0 OctoPrint will also support to run under Python 3 in addition to the deprecated
 # Python 2. New plugins should make sure to run under both versions for now. Uncomment one of the following
@@ -280,7 +280,7 @@ def __plugin_check__():
 
 def __plugin_load__():
     global __plugin_implementation__
-    __plugin_implementation__ = CameraSettingsPlugin()
+    __plugin_implementation__ = ExternalCameraSettingsPlugin()
 
     global __plugin_hooks__
     __plugin_hooks__ = {

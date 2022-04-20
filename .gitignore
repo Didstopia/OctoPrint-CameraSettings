@@ -7,4 +7,6 @@ dist
 *.egg*
 .DS_Store
 *.zip
-.vscode/
+
+# .vscode/
+.venv/

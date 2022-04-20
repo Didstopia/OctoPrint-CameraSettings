@@ -1,11 +1,13 @@
 /*
- * View model for OctoPrint-CameraSettings
+ * View model for OctoPrint-ExternalCameraSettings
  *
- * Author: Taylor Talkington
+ * Authors:
+ * - Taylor Talkington
+ * - Didstopia
  * License: AGPLv3
  */
 $(function() {
-    function CamerasettingsViewModel(parameters) {
+    function externalcamerasettingsViewModel(parameters) {
         var self = this;
         self.settings = parameters[0]
         self.cameraSrc = ko.observable(undefined);
@@ -125,12 +127,12 @@ $(function() {
                 var val = self.controls[control].value();
                 if (typeof val === 'boolean') val = val ? '1' : '0';
                 if (self.controls[control].use()) ctrls[control] = val;
-                OctoPrint.simpleApiCommand('camerasettings', 'set_camera_controls', {camera: self.selectedDevice(), controls: ctrls})
+                OctoPrint.simpleApiCommand('externalcamerasettings', 'set_camera_controls', {camera: self.selectedDevice(), controls: ctrls})
             }
         }
 
         self.restoreDefaults = function() {
-            OctoPrint.simpleApiCommand('camerasettings','restore_defaults', {camera: self.selectedDevice()} );
+            OctoPrint.simpleApiCommand('externalcamerasettings','restore_defaults', {camera: self.selectedDevice()} );
         }
 
 
@@ -142,38 +144,38 @@ $(function() {
                 }
             }
             self.deletePresetByName(self.presetName());
-            self.settings.settings.plugins.camerasettings.presets.push({name: ko.observable(self.presetName()), camera: ko.observable(self.selectedDevice()), controls: controls});
+            self.settings.settings.plugins.externalcamerasettings.presets.push({name: ko.observable(self.presetName()), camera: ko.observable(self.selectedDevice()), controls: controls});
         }
 
         self.deletePresetByName = function(name) {
             var ind = -1;
-            for(var i in self.settings.settings.plugins.camerasettings.presets()) {
-                if (self.settings.settings.plugins.camerasettings.presets()[i].name()===name) {
+            for(var i in self.settings.settings.plugins.externalcamerasettings.presets()) {
+                if (self.settings.settings.plugins.externalcamerasettings.presets()[i].name()===name) {
                     ind = i;
                     break;
                 }
             }
-            if (ind >=0) self.settings.settings.plugins.camerasettings.presets.splice(ind, 1);
+            if (ind >=0) self.settings.settings.plugins.externalcamerasettings.presets.splice(ind, 1);
         }
 
         self.loadPreset = function() {
-            OctoPrint.simpleApiCommand('camerasettings', 'load_preset', {name: self.presetListName() });
+            OctoPrint.simpleApiCommand('externalcamerasettings', 'load_preset', {name: self.presetListName() });
         }
 
         self.deletePreset = function() {
             self.deletePresetByName(self.presetListName());
         }
 
-        self.onEventplugin_camerasettings_cameras_list = function(payload) {
+        self.onEventplugin_externalcamerasettings_cameras_list = function(payload) {
             if (payload.cameras) {
                 self.cameras(payload.cameras);
             }
             if (payload.error) {
-                new PNotify({title:'Camera Settings', text: payload.error, type: 'error', hide: false});
+                new PNotify({title:'External Camera Settings', text: payload.error, type: 'error', hide: false});
             }
         }
 
-        self.onEventplugin_camerasettings_camera_control_list = function(payload) {
+        self.onEventplugin_externalcamerasettings_camera_control_list = function(payload) {
 
             if (payload.controls) {
                 var controls = payload.controls;
@@ -189,7 +191,7 @@ $(function() {
                         if (controls[control].type==='bool') {
                             self.controls[control].value(controls[control].value==='1' ? true : false);
                         } else if (controls[control].type==='button') {
-                            continue; // ignore 'button' controls for now  
+                            continue; // ignore 'button' controls for now
                         } else {
                             self.controls[control].value(controls[control].value);
                         }
@@ -211,7 +213,7 @@ $(function() {
 
             if (payload.error) {
                 new PNotify({
-                    title:'Camera Settings', 
+                    title:'External Camera Settings',
                     text: `Could not load camera controls:<br><span style="font-style: italic;">${payload.error}</span>`,
                     type: 'error',
                     hide: false});
@@ -225,18 +227,18 @@ $(function() {
             tmp.val(txt).select();
             document.execCommand("copy");
             tmp.remove();
-            new PNotify({title:'Camera Settings', text: 'Unknown Controls Details Copied to Clipboard', type: 'success'});
+            new PNotify({title:'External Camera Settings', text: 'Unknown Controls Details Copied to Clipboard', type: 'success'});
         }
 
         self.getCameraProfile = function() {
-            if (self.settings.settings.plugins.multicam===undefined || !self.settings.settings.plugins.camerasettings.multicam_support()) {
+            if (self.settings.settings.plugins.multicam===undefined || !self.settings.settings.plugins.externalcamerasettings.multicam_support()) {
                 return undefined;
             }
 
             var mcProfiles = self.settings.settings.plugins.multicam.multicam_profiles();
-            var mapping = self.settings.settings.plugins.camerasettings.multicam_mapping();
+            var mapping = self.settings.settings.plugins.externalcamerasettings.multicam_mapping();
 
-            var camName = undefined;            
+            var camName = undefined;
 
             for(var c in self.cameras()) {
                 if (self.cameras()[c].device===self.selectedDevice()) {
@@ -267,7 +269,7 @@ $(function() {
         }
 
         self.onSettingsShown = function() {
-            OctoPrint.simpleApiCommand('camerasettings', 'get_cameras');
+            OctoPrint.simpleApiCommand('externalcamerasettings', 'get_cameras');
             //self.cameraSrc(self.settings.settings.webcam.streamUrl());
             self.setupStreamPreview();
         }
@@ -292,7 +294,7 @@ $(function() {
             }
 
             if (determineWebcamStreamType(self.cameraSrc())=="hls") {
-                var video = document.getElementById("camerasettings_preview_hls");
+                var video = document.getElementById("externalcamerasettings_preview_hls");
                 self.webcamHLS(true);
                 if (video.canPlayType("application/vnd.apple.mpegurl")) {
                     // do nothing , the video tag already has the URL
@@ -308,7 +310,7 @@ $(function() {
         }
 
         self.selectedDevice.subscribe(function(newValue) {
-            OctoPrint.simpleApiCommand('camerasettings', 'get_camera_controls', {camera: self.selectedDevice()});   
+            OctoPrint.simpleApiCommand('externalcamerasettings', 'get_camera_controls', {camera: self.selectedDevice()});
 
             self.setupStreamPreview();
         });
@@ -319,10 +321,10 @@ $(function() {
      * and a full list of the available options.
      */
     OCTOPRINT_VIEWMODELS.push({
-        construct: CamerasettingsViewModel,
+        construct: externalcamerasettingsViewModel,
         // ViewModels your plugin depends on, e.g. loginStateViewModel, settingsViewModel, ...
         dependencies: ["settingsViewModel"],
-        // Elements to bind to, e.g. #settings_plugin_CameraSettings, #tab_plugin_CameraSettings, ...
-        elements: [ '#settings_plugin_camerasettings' ]
+        // Elements to bind to, e.g. #settings_plugin_externalcamerasettings, #tab_plugin_externalcamerasettings, ...
+        elements: [ '#settings_plugin_externalcamerasettings' ]
     });
 });
