@@ -6,7 +6,7 @@
     {
       "label": "Create Virtual Environment",
       "type": "shell",
-      "command": "python3 -m venv ${workspaceFolder}/.env",
+      "command": "python3 -m venv ${workspaceFolder}/.venv",
     }
   ]
 }

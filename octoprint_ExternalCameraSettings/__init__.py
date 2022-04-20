@@ -9,53 +9,68 @@ import os
 import re
 import threading
 
-CTRL_PAT = re.compile(r' +(?P<name>\w+) ?(?P<id>0x\w+)? \((?P<type>\w+)\) *: (min=(?P<min>[\-\d]+))? ?(max=(?P<max>[\-\d]+))? ?(step=(?P<step>[\-\d]+))? ?(default=(?P<default>[\-\d]+))? ?(value=(?P<value>[\-\d]+))? ?(flags=(?P<flags>\w+))?')
+CTRL_PAT = re.compile(
+    r' +(?P<name>\w+) ?(?P<id>0x\w+)? \((?P<type>\w+)\) *: (min=(?P<min>[\-\d]+))? ?(max=(?P<max>[\-\d]+))? ?(step=(?P<step>[\-\d]+))? ?(default=(?P<default>[\-\d]+))? ?(value=(?P<value>[\-\d]+))? ?(flags=(?P<flags>\w+))?')
 MENU_PAT = re.compile(r'[\t ]+(?P<value>\d+): (?P<desc>.*)')
 
+
 class ExternalCameraSettingsPlugin(octoprint.plugin.SettingsPlugin,
-                           octoprint.plugin.AssetPlugin,
-                           octoprint.plugin.StartupPlugin,
-                           octoprint.plugin.SimpleApiPlugin,
-                           octoprint.plugin.TemplatePlugin):
+                                   octoprint.plugin.AssetPlugin,
+                                   octoprint.plugin.StartupPlugin,
+                                   octoprint.plugin.SimpleApiPlugin,
+                                   octoprint.plugin.EventHandlerPlugin,
+                                   octoprint.plugin.TemplatePlugin):
     def get_camera_ctrls(self, device):
         ctrls = {}
         self._logger.debug("Getting controls for {0}".format(device))
         # using run instead of check_output here in the odd case that we get passed a video device
         # that doesn't actually exist
-        v4l2_list_ctrls = subprocess.run(['v4l2-ctl','-d',os.path.join('/dev',device),'--list-ctrls-menus'], stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.decode('utf-8').split('\n')
+        v4l2_list_ctrls = subprocess.run(['v4l2-ctl', '-d', os.path.join('/dev', device), '--list-ctrls-menus'],
+                                         stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.decode('utf-8').split('\n')
         last_ctrl = None
         last_ctrl_is_menu = False
-        self._logger.debug("[{0}] Processing output of v4l2-ctl --list-ctrls-menus:".format(device))
+        self._logger.debug(
+            "[{0}] Processing output of v4l2-ctl --list-ctrls-menus:".format(device))
         for line in v4l2_list_ctrls:
             m = CTRL_PAT.match(line)
             if m is None and not last_ctrl_is_menu:
-                self._logger.debug("[{1}] Skipping line, no CTRL_PAT match: {0}".format(line, device))
+                self._logger.debug(
+                    "[{1}] Skipping line, no CTRL_PAT match: {0}".format(line, device))
                 continue
             if m is None and last_ctrl_is_menu:
                 m = MENU_PAT.match(line)
                 if m is None:
-                    self._logger.debug("[{1}] Skipping line, no MENU_PAT match: {0}".format(line, device))
+                    self._logger.debug(
+                        "[{1}] Skipping line, no MENU_PAT match: {0}".format(line, device))
                     continue
-                ctrls[last_ctrl]['values'].append({'value': m.group('value'), 'desc': m.group('desc')})
-                self._logger.debug("[{1}] Found MENU item in: {0}".format(line, device))
+                ctrls[last_ctrl]['values'].append(
+                    {'value': m.group('value'), 'desc': m.group('desc')})
+                self._logger.debug(
+                    "[{1}] Found MENU item in: {0}".format(line, device))
                 continue
-            self._logger.debug("[{1}] Found CONTROL in: {0}".format(line, device))
+            self._logger.debug(
+                "[{1}] Found CONTROL in: {0}".format(line, device))
             last_ctrl = m.group('name')
             ctrl = {'type': m.group('type')}
-            if m.group('type') in ['menu','intmenu']:
+            if m.group('type') in ['menu', 'intmenu']:
                 ctrl['values'] = []
                 last_ctrl_is_menu = True
-            if m.group('min'): ctrl['min'] = m.group('min')
-            if m.group('max'): ctrl['max'] = m.group('max')
-            if m.group('step'): ctrl['step'] = m.group('step')
-            if m.group('default'): ctrl['default'] = m.group('default')
-            if m.group('value'): ctrl['value'] = m.group('value')
-            if m.group('flags'): ctrl['flags'] = m.group('flags')
+            if m.group('min'):
+                ctrl['min'] = m.group('min')
+            if m.group('max'):
+                ctrl['max'] = m.group('max')
+            if m.group('step'):
+                ctrl['step'] = m.group('step')
+            if m.group('default'):
+                ctrl['default'] = m.group('default')
+            if m.group('value'):
+                ctrl['value'] = m.group('value')
+            if m.group('flags'):
+                ctrl['flags'] = m.group('flags')
             ctrls[m.group('name')] = ctrl
         return ctrls
 
-
-    ##~~ SettingsPlugin mixin
+    # ~~ SettingsPlugin mixin
 
     def get_settings_defaults(self):
         return dict(
@@ -77,19 +92,23 @@ class ExternalCameraSettingsPlugin(octoprint.plugin.SettingsPlugin,
         for filter in self._settings.get(['camera_name_filters']):
             pat = re.compile(filter)
             if pat.match(name):
-                self._logger.info("Excluding camera {0} based on {1}".format(name,filter))
+                self._logger.info(
+                    "Excluding camera {0} based on {1}".format(name, filter))
                 return True
         return False
 
     def on_after_startup(self):
-        if self._settings.get_boolean(['load_preset_on_startup']):
-            name = self._settings.get(['startup_preset_name'])
-            count = self._settings.get_int(['startup_preset_apply_count'])
-            self._logger.info('Loading {0} preset, applying {1} time(s)'.format(name, count))
-            t = threading.Thread(target=self.do_load_preset, args=(name, count))
-            t.start()
+        self.do_load_startup_preset()
+        # if self._settings.get_boolean(['load_preset_on_startup']):
+        #     name = self._settings.get(['startup_preset_name'])
+        #     count = self._settings.get_int(['startup_preset_apply_count'])
+        #     self._logger.info(
+        #         'Loading {0} preset, applying {1} time(s)'.format(name, count))
+        #     t = threading.Thread(
+        #         target=self.do_load_preset, args=(name, count))
+        #     t.start()
 
-    ##~~ SimpleApi mixin
+    # ~~ SimpleApi mixin
     def get_api_commands(self):
         return {
             'get_cameras': [],
@@ -107,24 +126,41 @@ class ExternalCameraSettingsPlugin(octoprint.plugin.SettingsPlugin,
         elif command == 'set_camera_controls':
             self.do_set_camera_controls(data['camera'], data['controls'])
         elif command == 'load_preset':
-            self.do_load_preset(data['name'], self._settings.get_int(['startup_preset_apply_count']))
+            self.do_load_preset(data['name'], self._settings.get_int(
+                ['startup_preset_apply_count']))
         elif command == 'restore_defaults':
             self.do_restore_defaults(data['camera'])
+
+    def do_load_startup_preset(self):
+        # FIXME: Ideally we should ONLY be applying the preset IF the current
+        #        camera values do NOT match the target values, perhaps even on a timer?
+
+        if self._settings.get_boolean(['load_preset_on_startup']):
+            name = self._settings.get(['startup_preset_name'])
+            count = self._settings.get_int(['startup_preset_apply_count'])
+            self._logger.info(
+                'Loading {0} startup preset, applying {1} time(s)'.format(name, count))
+            t = threading.Thread(
+                target=self.do_load_preset, args=(name, count))
+            t.start()
 
     def do_load_preset(self, name, count=1):
         self._logger.debug("Loading preset {0}".format(name))
         presets = self._settings.get(['presets'])
         preset = None
         for p in presets:
-            if p['name']==name: preset = p
+            if p['name'] == name:
+                preset = p
 
-        if preset is None: return
+        if preset is None:
+            return
         self.do_set_camera_controls(p['camera'], p['controls'], True, count)
 
     def do_restore_defaults(self, device):
         self._logger.debug("Restoring defaults on{0}".format(device))
         ctrls = self.get_camera_ctrls(device)
-        controls = {x: ctrls[x]['default'] for x in ctrls if 'default' in ctrls[x] }
+        controls = {x: ctrls[x]['default']
+                    for x in ctrls if 'default' in ctrls[x]}
         self.do_set_camera_controls(device, controls)
 
     def do_set_camera_controls(self, device, controls, send_list=True, count=1):
@@ -135,21 +171,24 @@ class ExternalCameraSettingsPlugin(octoprint.plugin.SettingsPlugin,
         self._logger.debug("Controls: {0}".format(ctrl_args))
         for _ in range(count):
             for control in controls:
-                    self._logger.debug("Setting {0} = {1} on {2}".format(control, controls[control], device))
-                    try:
-                        out = subprocess.check_output(
-                            ['v4l2-ctl',
-                             '-k',
-                             '--verbose',
-                             '-d', '/dev/{0}'.format(device),
-                             '--set-ctr', '{0}={1}'.format(control, controls[control])],
-                            stderr=subprocess.STDOUT)
-                        self._logger.debug("v4l2-ctl ran successfully:\n{0}".format(out.decode('utf-8')))
-                    except subprocess.CalledProcessError as er:
-                        self._logger.warning('Error setting {0}:\n{1}'.format(control, er.output.decode('utf-8')))
+                self._logger.debug("Setting {0} = {1} on {2}".format(
+                    control, controls[control], device))
+                try:
+                    out = subprocess.check_output(
+                        ['v4l2-ctl',
+                         '-k',
+                         '--verbose',
+                         '-d', '/dev/{0}'.format(device),
+                         '--set-ctr', '{0}={1}'.format(control, controls[control])],
+                        stderr=subprocess.STDOUT)
+                    self._logger.debug(
+                        "v4l2-ctl ran successfully:\n{0}".format(out.decode('utf-8')))
+                except subprocess.CalledProcessError as er:
+                    self._logger.warning('Error setting {0}:\n{1}'.format(
+                        control, er.output.decode('utf-8')))
 
-        if send_list: self.do_camera_control_list_event(device)
-
+        if send_list:
+            self.do_camera_control_list_event(device)
 
     def do_cameras_list_event(self):
         self._logger.debug("Building camera list")
@@ -159,57 +198,90 @@ class ExternalCameraSettingsPlugin(octoprint.plugin.SettingsPlugin,
         try:
             video_devices = {}
             video_ctrls = {}
-            #if "V4L2_CTL_ALIAS" in os.environ:
+            # if "V4L2_CTL_ALIAS" in os.environ:
             #    video_path = '/tmp/sys/class/video4linux'
             with os.scandir(video_path) as it:
                 for dirent in it:
                     if dirent.is_dir():
-                        with open(os.path.join(video_path,dirent.name,'name'),'r') as dev_name:
+                        with open(os.path.join(video_path, dirent.name, 'name'), 'r') as dev_name:
                             cam_name = dev_name.read().strip()
                             if not self.exclude_camera(cam_name):
                                 video_devices[dirent.name] = cam_name
                                 try:
-                                    video_ctrls[dirent.name] = self.get_camera_ctrls(dirent.name)
-                                except FileNotFoundError: # v4l2-ctl not installed, not handing it here, we'll error out when controls are requested
+                                    video_ctrls[dirent.name] = self.get_camera_ctrls(
+                                        dirent.name)
+                                except FileNotFoundError:  # v4l2-ctl not installed, not handing it here, we'll error out when controls are requested
                                     pass
 
             for dev in video_ctrls:
-                if len(video_ctrls[dev])==0: del video_devices[dev]
+                if len(video_ctrls[dev]) == 0:
+                    del video_devices[dev]
 
             cam_names = [video_devices[d] for d in video_devices]
             self._logger.debug("Building multicam_mapping")
             cam_map = self._settings.get(['multicam_mapping'])
             self._logger.debug("Original multicam_mapping {0}".format(cam_map))
             for cam in cam_names:
-                if len([x for x in cam_map if x['camera']==cam])==0: cam_map.append({'camera': cam, 'multicam': None})
+                if len([x for x in cam_map if x['camera'] == cam]) == 0:
+                    cam_map.append({'camera': cam, 'multicam': None})
 
             cam_map = [x for x in cam_map if x['camera'] in cam_names]
             self._logger.debug("New multicam_mapping {0}".format(cam_map))
 
             self._settings.set(['multicam_mapping'], cam_map, True)
 
-            self._logger.debug("Cameras found: {0}".format([{'device': d, 'camera': video_devices[d]} for d in video_devices]))
-            self._event_bus.fire(event, payload={'cameras': [{'device': d, 'camera': video_devices[d]} for d in video_devices]})
+            self._logger.debug("Cameras found: {0}".format(
+                [{'device': d, 'camera': video_devices[d]} for d in video_devices]))
+            self._event_bus.fire(event, payload={'cameras': [
+                                 {'device': d, 'camera': video_devices[d]} for d in video_devices]})
         except FileNotFoundError:
-            self._logger.error(video_path+" does not exist. Can't get camera devices. Are you sure this is linux?")
-            self._event_bus.fire(event, payload={'error': video_path+" does not exist. Can't get camera devices."})
+            self._logger.error(
+                video_path+" does not exist. Can't get camera devices. Are you sure this is linux?")
+            self._event_bus.fire(event, payload={
+                                 'error': video_path+" does not exist. Can't get camera devices."})
 
-    def do_camera_control_list_event(self,device):
+    def do_camera_control_list_event(self, device):
         self._logger.debug("Sending camera control list event")
         # pylint: disable=no-member
         event = octoprint.events.Events.PLUGIN_EXTERNALCAMERASETTINGS_CAMERA_CONTROL_LIST
         try:
             ctrls = self.get_camera_ctrls(device)
             self._event_bus.fire(event, payload={'controls': ctrls})
-        except FileNotFoundError: # v4l2-ctl not installed
-            self._logger.error("v4l2-ctl not installed. Install the v4l-utils package.")
-            self._event_bus.fire(event, payload={'error': 'v4l2-ctl not installed.'})
-
+        except FileNotFoundError:  # v4l2-ctl not installed
+            self._logger.error(
+                "v4l2-ctl not installed. Install the v4l-utils package.")
+            self._event_bus.fire(
+                event, payload={'error': 'v4l2-ctl not installed.'})
 
     def register_custom_events(self, *args, **kwargs):
-        return ['cameras_list','camera_control_list', 'camera_control_set']
+        return ['cameras_list', 'camera_control_list', 'camera_control_set']
 
-    ##~~ AssetPlugin mixin
+    # ~~ EventHandlerPlugin mixin
+
+    def on_event(self, event, payload):
+        # FIXME: Ideally we should ONLY be applying the preset IF the current
+        #        camera values do NOT match the target values, perhaps even on a timer?
+
+        # Printer was powered on
+        if event == 'PowerOn':
+            self.do_load_startup_preset()
+        # Printer' connection state changed
+        elif event == 'PrinterStateChanged':
+            self.do_load_startup_preset()
+        # Print was started
+        elif event == 'PrintStarted':
+            self.do_load_startup_preset()
+        # Internet connectivity changed
+        elif event == 'ConnectivityChanged':
+            self.do_load_startup_preset()
+        # User was logged in
+        elif event == 'UserLoggedIn':
+            self.do_load_startup_preset()
+        # Client has connected
+        elif event == 'ClientOpened':
+            self.do_load_startup_preset()
+
+    # ~~ AssetPlugin mixin
 
     def get_assets(self):
         # Define your plugin's asset files to automatically include in the
@@ -223,7 +295,7 @@ class ExternalCameraSettingsPlugin(octoprint.plugin.SettingsPlugin,
         return [
         ]
 
-    ##~~ Softwareupdate hook
+    # ~~ Softwareupdate hook
 
     def get_update_information(self):
         # Define the configuration for your plugin to use with the Software Update
@@ -268,15 +340,18 @@ __plugin_name__ = "External Camera Settings"
 # Starting with OctoPrint 1.4.0 OctoPrint will also support to run under Python 3 in addition to the deprecated
 # Python 2. New plugins should make sure to run under both versions for now. Uncomment one of the following
 # compatibility flags according to what Python versions your plugin supports!
-#__plugin_pythoncompat__ = ">=2.7,<3" # only python 2
-__plugin_pythoncompat__ = ">=3,<4" # only python 3
-#__plugin_pythoncompat__ = ">=2.7,<4" # python 2 and 3
+# __plugin_pythoncompat__ = ">=2.7,<3" # only python 2
+__plugin_pythoncompat__ = ">=3,<4"  # only python 3
+# __plugin_pythoncompat__ = ">=2.7,<4" # python 2 and 3
+
 
 def __plugin_check__():
     import sys
     # Py3.3+ linux is always linux, before that linux may be linux, linux2, linux3, etc
-    if not sys.platform.startswith('linux'): return False
+    if not sys.platform.startswith('linux'):
+        return False
     return True
+
 
 def __plugin_load__():
     global __plugin_implementation__
@@ -287,4 +362,3 @@ def __plugin_load__():
         "octoprint.plugin.softwareupdate.check_config": __plugin_implementation__.get_update_information,
         "octoprint.events.register_custom_events": __plugin_implementation__.register_custom_events
     }
-
